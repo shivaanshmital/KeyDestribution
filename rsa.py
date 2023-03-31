@@ -68,6 +68,22 @@ def decrypt(ciphertext, private_key):
     plaintext = [chr((char ** d) % n) for char in ciphertext]
     return ''.join(plaintext)
 
+def gen_keys(p,q):
+    n = p * q
+    phi = (p - 1) * (q - 1)
+
+    e = random.randrange(1, phi)
+    while gcd(e, phi) != 1:
+        e = random.randrange(1, phi)
+
+    #  d the modular inverse of e
+    d = mod_inv(e, phi)
+
+    # public n priv  keys
+    public_key = (n, e)
+    private_key = (n, d)
+    return(public_key,private_key)
+
 def main():
     p = generate_primes(10)
     q = generate_primes(10)
