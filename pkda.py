@@ -32,9 +32,14 @@ server.bind((socket.gethostname(),2000))
 server.listen(10)
 # setting our public key distrbution authority such that it can listen to 10 clients
 
-# temporarily commented
+# initiator 
 sock, conn_from = server.accept()
+data_recv = sock.recv(1024).decode()
+print("Data received "+str(data_recv))
+req_handler(data_recv,sock)
 
+# responder
+sock, conn_from = server.accept()
 data_recv = sock.recv(1024).decode()
 print("Data received "+str(data_recv))
 req_handler(data_recv,sock)
