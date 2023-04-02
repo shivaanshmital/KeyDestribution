@@ -3,6 +3,7 @@ from rsa import *
 from datetime import datetime
 import json
 import ast
+import random
 
 def send_msgs(sock):
     
@@ -71,7 +72,7 @@ client.connect((socket.gethostname(), 2000))
 # since we are running the clients and the pkda on the same system
 # therefore we can use get gethostname for the ip address to
 # connect to the server
-request_pkda = {'time':str(datetime.now()),'id':'A',"Duration":5,'time':str(datetime.now())}
+request_pkda = {'time':str(datetime.now()),'id':'A',"Duration":5,'nonce':random.randint(0,1000),'self_id':'B'}
 # here id denotes the id of the entity whose key we want
 request_pkda = json.dumps(request_pkda)
 client.send(request_pkda.encode())
@@ -79,27 +80,29 @@ data_recv_from_pkda = client.recv(1024).decode()
 data_recv_from_pkda = decrypt(ast.literal_eval(data_recv_from_pkda),pkda_public_key)
 # print("Data received "+str(data_recv_from_pkda))
 data_recv_from_pkda = json.loads(data_recv_from_pkda)
-data_recv_from_pkda['publicKey'] = eval(data_recv_from_pkda['publicKey'])
-public_key_A = data_recv_from_pkda['publicKey']
-print("Data received from pkda "+str(data_recv_from_pkda))
-client.close()
+if data_recv_from_pkda['nonce']==json.loads(request_pkda)['nonce']+1:
 
-nonce = json.loads(data_recv)['nonce']
-request = {'id':'B','N1':nonce+1,'N2':50,"Duration":5,'time':str(datetime.now())}
+    data_recv_from_pkda['publicKey'] = eval(data_recv_from_pkda['publicKey'])
+    public_key_A = data_recv_from_pkda['publicKey']
+    print("Data received from pkda "+str(data_recv_from_pkda))
+    client.close()
 
-request_to_send = encrypt(json.dumps(request),public_key_A)
-sock.send(str(request_to_send).encode())
-# request = json.loads(request)
-data_recv = decrypt(ast.literal_eval(sock.recv(1024).decode()),private_key)
-data_recv = json.loads(data_recv)
-# print(data_recv)
-# print(type(data_recv))
-# print(request)
-# print(type(request))
-if data_recv['N2']!= request['N2']+1:
-    print("Incorrect Nonce")
-else:
-    print("Nonce received")
-    send_msgs(sock)
+    nonce = json.loads(data_recv)['nonce']
+    request = {'id':'B','N1':nonce+1,'N2':random.randint(0,1000),"Duration":5,'time':str(datetime.now())}
+
+    request_to_send = encrypt(json.dumps(request),public_key_A)
+    sock.send(str(request_to_send).encode())
+    # request = json.loads(request)
+    data_recv = decrypt(ast.literal_eval(sock.recv(1024).decode()),private_key)
+    data_recv = json.loads(data_recv)
+    # print(data_recv)
+    # print(type(data_recv))
+    # print(request)
+    # print(type(request))
+    if data_recv['N2']!= request['N2']+1:
+        print("Incorrect Nonce")
+    else:
+        print("Nonce received")
+        send_msgs(sock)
 
 sock.close()

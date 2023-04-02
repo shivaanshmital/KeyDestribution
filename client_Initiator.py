@@ -3,9 +3,10 @@ from rsa import *
 from datetime import datetime
 import json
 import ast
+import random
 
 def send_msg(client):
-    nonce = 5
+    nonce = random.randint(0,1000)
     request = {'id':'A','time':str(datetime.now()),'N1':nonce,"Duration":5,'Message':"This is the first message"}
     nonce+=1
     client.send(str(encrypt(json.dumps(request),public_key_B)).encode())
@@ -60,7 +61,7 @@ public_key = (625967, 105343)
 private_key = (625967, 472447)
 
 
-request = {'time':str(datetime.now()),'id':'B',"Duration":5}
+request = {'time':str(datetime.now()),'id':'B',"Duration":5,'nonce':random.randint(0,1000),'self_id':'A'}
 request = json.dumps(request)
 
 
@@ -80,31 +81,32 @@ data_recv = decrypt(ast.literal_eval(data_recv),pkda_public_key)
 # print("Data received "+str(data_recv))
 data_recv = json.loads(data_recv)
 data_recv['publicKey'] = eval(data_recv['publicKey'])
-public_key_B = data_recv['publicKey']
-# the json we received
-print(data_recv)
-client.close()
+if data_recv['nonce'] == json.loads(request)['nonce']+1:
+    public_key_B = data_recv['publicKey']
+    # the json we received
+    print(data_recv)
+    client.close()
 
 
-client = socket.socket() 
-# creating an instance of the socket 
-client.connect((socket.gethostname(), 2001))  
+    client = socket.socket() 
+    # creating an instance of the socket 
+    client.connect((socket.gethostname(), 2001))  
 
-request = {'id':'A','time':str(datetime.now()),'nonce':35,"Duration":5}
-# I have made a nonce whose correct response should be n+1
-request_to_send = json.dumps(request)
+    request = {'id':'A','time':str(datetime.now()),'nonce':random.randint(0,1000),"Duration":5}
+    # I have made a nonce whose correct response should be n+1
+    request_to_send = json.dumps(request)
 
-client.send(str(encrypt(json.dumps(request_to_send),public_key_B)).encode())
+    client.send(str(encrypt(json.dumps(request_to_send),public_key_B)).encode())
 
-data_recv = client.recv(1024).decode()
-data_recv = decrypt(ast.literal_eval(data_recv),private_key)
-# print(data_recv)
-data_recv = json.loads(data_recv)
-if data_recv['N1']!= request['nonce']+1:
-    print("Incorrect Nonce")
-else:
-    request = {'id':'A','time':str(datetime.now()),'N2':data_recv['N2']+1,"Duration":5}
-    print("Data received "+str(data_recv))
-    client.send(str(encrypt(json.dumps(request),public_key_B)).encode())
-    send_msg(client)
-client.close()
+    data_recv = client.recv(1024).decode()
+    data_recv = decrypt(ast.literal_eval(data_recv),private_key)
+    # print(data_recv)
+    data_recv = json.loads(data_recv)
+    if data_recv['N1']!= request['nonce']+1:
+        print("Incorrect Nonce")
+    else:
+        request = {'id':'A','time':str(datetime.now()),'N2':data_recv['N2']+1,"Duration":5}
+        print("Data received "+str(data_recv))
+        client.send(str(encrypt(json.dumps(request),public_key_B)).encode())
+        send_msg(client)
+    client.close()

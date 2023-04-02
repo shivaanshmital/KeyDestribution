@@ -8,6 +8,7 @@ import json
 def req_handler(data_recv,sock):
     request_recv = json.loads(data_recv)
     request_recv['publicKey'] = keys_dict[request_recv['id']]
+    request_recv['nonce']+=1
     response = encrypt(json.dumps(request_recv),private_key)
     sock.send(str(response).encode())
     
