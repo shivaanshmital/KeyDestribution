@@ -60,12 +60,12 @@ def generate_primes(n_bits):
 
 def encrypt(plaintext, public_key):
     n, e = public_key
-    ciphertext = [(ord(char) ** e) % n for char in plaintext]
+    ciphertext = [ pow((ord(char)),e) % n for char in plaintext]
     return ciphertext
 
 def decrypt(ciphertext, private_key):
     n, d = private_key
-    plaintext = [chr((char ** d) % n) for char in ciphertext]
+    plaintext = [chr(pow((char), d) % n) for char in ciphertext]
     return ''.join(plaintext)
 
 def gen_keys(p,q):
